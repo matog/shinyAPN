@@ -3,6 +3,7 @@
 
 
 library(shiny)
+library(shinyWidgets)
 library(ggplot2)
 library(dplyr)
 library(kableExtra)
@@ -11,12 +12,8 @@ library(tidyquant)
 library(knitr)
 library(dslabs)
 library(janitor)
-# setwd("/home/mato/Documentos/R/Shinny/APN")
-# base <- read_csv2("credito-diario-2020.csv")
-# base$cod_inc=as.factor(base$cod_inc)
-# base$cod_prog=as.factor(base$cod_prog)
-# base$cod_serv=as.factor(base$cod_serv)
-# base$cod_act=as.factor(base$cod_act)
+#setwd("/home/mato/Documentos/R/Shiny/APN")
+#base <- read_csv2("credito-diario-2020.csv")
 
 # base %>%
 #   group_by(programa_desc) %>%
