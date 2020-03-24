@@ -30,21 +30,66 @@ ui <- fluidPage(
     headerPanel("Información Presupuestaria - Administración Pública Nacional"),
     fluidRow(
       column(2,
-             selectInput("jurisdiccion", "Jurisdiccion", choices = unique(base$jurisdiccion_desc))
-      ),
+        pickerInput(
+          inputId = "jurisdiccion", 
+          label = "Jurisdiccion", 
+          choices = unique(base$jurisdiccion_desc), 
+          options = list(
+            `actions-box` = TRUE, 
+            size = 10,
+            `selected-text-format` = "count > 3"
+          ), 
+          multiple = TRUE
+      )),
       column(2,
-             selectInput("servicio", "Servicios", choices = NULL)
-      ),
+        pickerInput(
+          inputId = "servicio", 
+          label = "Servicio", 
+          choices = NULL, 
+          options = list(
+            `actions-box` = TRUE, 
+            size = 10,
+            `selected-text-format` = "count > 3"
+          ), 
+          multiple = TRUE
+      )),      
       column(2,
-               selectInput("programa", "Programa", choices = NULL)
-               ),
+        pickerInput(
+          inputId = "programa", 
+          label = "Programa", 
+          choices = NULL, 
+          options = list(
+            `actions-box` = TRUE, 
+            size = 10,
+            `selected-text-format` = "count > 3"
+          ), 
+          multiple = TRUE
+      )),      
       column(2,
-               selectInput("actividad", "Actividad", choices = NULL)
-               ),
-        column(2,
-               selectInput("inciso", "Inciso", choices = NULL),
-               )
-        ),
+        pickerInput(
+          inputId = "actividad", 
+          label = "Actividad", 
+          choices = NULL, 
+          options = list(
+            `actions-box` = TRUE, 
+            size = 10,
+            `selected-text-format` = "count > 3"
+          ), 
+          multiple = TRUE
+        )),            
+      column(2,
+        pickerInput(
+          inputId = "inciso", 
+          label = "Inciso", 
+          choices = NULL, 
+          options = list(
+            `actions-box` = TRUE, 
+            size = 10,
+            `selected-text-format` = "count > 3"
+          ), 
+          multiple = TRUE
+      )),      
+    ),
     plotOutput("grafico"),
     br(), br(),
     tableOutput("tabla")
@@ -55,38 +100,38 @@ server <- function(input, output, session) {
   # Generamos los menues anidados, tal como lo expican en https://mastering-shiny.org/action-dynamic.html#hierarchical-select
   #
   jurisdiccion <- reactive({
-        filter(base, jurisdiccion_desc == input$jurisdiccion)
+        filter(base, jurisdiccion_desc %in% input$jurisdiccion)
     })
     observeEvent(jurisdiccion(), {
         choices <- unique(jurisdiccion()$servicio_desc)
-        updateSelectInput(session, "servicio", choices = choices) 
+        updatePickerInput(session, "servicio", choices = choices) 
     })
  
     programa <- reactive({
       req(input$servicio) 
-      filter(base, servicio_desc == input$servicio)
+      filter(base, servicio_desc %in% input$servicio)
     })
     observeEvent(programa(), {
       choices <- unique(programa()$programa_desc)
-      updateSelectInput(session, "programa", choices = choices)
+      updatePickerInput(session, "programa", choices = choices)
     })
 
     actividad <- reactive({
         req(input$programa)
-        filter(base, programa_desc == input$programa & servicio_desc == input$servicio)
+        filter(base, programa_desc %in% input$programa & servicio_desc %in% input$servicio)
     })
     observeEvent(actividad(), {
         choices <- unique(actividad()$actividad_desc)
-        updateSelectInput(session, "actividad", choices = choices)
+        updatePickerInput(session, "actividad", choices = choices)
     })
 
     inciso <- reactive({
       req(input$actividad)
-      filter(base, actividad_desc == input$actividad & programa_desc == input$programa & servicio_desc == input$servicio)
+      filter(base, actividad_desc %in% input$actividad & programa_desc %in% input$programa & servicio_desc %in% input$servicio)
     })
     observeEvent(inciso(), {
       choices <- unique(inciso()$inciso_desc)
-      updateSelectInput(session, "inciso", choices = choices)
+      updatePickerInput(session, "inciso", choices = choices)
     })
 
     ################################
@@ -98,7 +143,9 @@ server <- function(input, output, session) {
         inciso() %>% 
           filter(inciso_desc == input$inciso) %>% 
           group_by("PROGRAMA"= programa_desc, "ACTIVIDAD" = actividad_desc,"INCISO" = inciso_desc) %>%
-          summarize("CREDITO VIGENTE" = sum(credito_vigente), "CREDITO COMPROMETIDO" = sum(credito_comprometido), "CREDITO DEVENGADO" = sum(credito_devengado)) #%>%
+          summarize("CREDITO VIGENTE" = sum(credito_vigente), "CREDITO COMPROMETIDO" = sum(credito_comprometido), "CREDITO DEVENGADO" = sum(credito_devengado)) %>%
+          adorn_totals(., where = "row", fill = "-", na.rm = TRUE, name = "Total") %>% # Totales
+          mutate_each(funs(prettyNum(., decimal.mark=",", big.mark=".")))  #Formato de miles 
         })
 
     ################################
